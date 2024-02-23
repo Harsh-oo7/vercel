@@ -16,7 +16,7 @@ app.use(express.json());
 
 
 app.post('/deploy', async (req, res) => {
-    const repoURL = req.body.repoURL;
+    const repoURL = req.body.repoUrl;
     console.log(repoURL);
     const id = generate()
     
@@ -30,9 +30,17 @@ app.post('/deploy', async (req, res) => {
     // console.log(files)
 
     await new Promise((resolve) => setTimeout(resolve, 5000)); // wait for some time to upload all the files then push to queue otheriwse files are not visible 
-    (await RedisConnection).lpush("build-queue", id)
-
+    (await RedisConnection).lpush("build-queue", id);
+    (await RedisConnection).hset("status", id, "uploaded");
     res.json({id: id})
+})
+
+app.get("/status", async (req, res) => {
+  const id = req.query.id;
+  const response = await (await RedisConnection).hget("status", id as string);
+  res.json({
+      status: response
+  })
 })
 
 app.listen(3000, () => {
